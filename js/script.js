@@ -13,18 +13,28 @@ const delay = 500; //delay to reset the game
 // Create ball props
 const ball = {
   x: canvas.width / 2,
-  y: canvas.height / 2,
+  y: canvas.height / 1,
   size: 10,
   speed: 4,
-  dx: 4,
+  dx: 1,
   dy: -4,
   visible: true
 };
 
 // Create paddle props
-const paddle = {
+const paddleBottom = {
   x: canvas.width / 2 - 40,
   y: canvas.height - 20,
+  w: 80,
+  h: 10,
+  speed: 8,
+  dx: 0,
+  visible: true
+};
+
+const paddleTop = {
+  x: canvas.width / 2 - 580,
+  y: canvas.height - 560,
   w: 80,
   h: 10,
   speed: 8,
@@ -38,7 +48,7 @@ const brickInfo = {
   h: 20,
   padding: 10,
   offsetX: 45,
-  offsetY: 60,
+  offsetY: 220,
   visible: true
 };
 
@@ -63,10 +73,18 @@ function drawBall() {
 }
 
 // Draw paddle on canvas
-function drawPaddle() {
+function drawPaddleBottom() {
   ctx.beginPath();
-  ctx.rect(paddle.x, paddle.y, paddle.w, paddle.h);
-  ctx.fillStyle = paddle.visible ? '#0095dd' : 'transparent';
+  ctx.rect(paddleBottom.x, paddleBottom.y, paddleBottom.w, paddleBottom.h);
+  ctx.fillStyle = paddleBottom.visible ? '#0095dd' : 'transparent';
+  ctx.fill();
+  ctx.closePath();
+}
+
+function drawPaddleTop() {
+  ctx.beginPath();
+  ctx.rect(paddleTop.x, paddleTop.y, paddleTop.w, paddleTop.h);
+  ctx.fillStyle = paddleTop.visible ? '#001d2c' : 'transparent';
   ctx.fill();
   ctx.closePath();
 }
@@ -91,18 +109,32 @@ function drawBricks() {
 }
 
 // Move paddle on canvas
-function movePaddle() {
-  paddle.x += paddle.dx;
+function movePaddleBottom() {
+  paddleBottom.x += paddleBottom.dx;
 
   // Wall detection
-  if (paddle.x + paddle.w > canvas.width) {
-    paddle.x = canvas.width - paddle.w;
+  if (paddleBottom.x + paddleBottom.w > canvas.width) {
+    paddleBottom.x = canvas.width - paddleBottom.w;
   }
 
-  if (paddle.x < 0) {
-    paddle.x = 0;
+  if (paddleBottom.x < 0) {
+    paddleBottom.x = 0;
     }
 }
+
+function movePaddleTop() {
+  paddleTop.x += paddleTop.dx;
+
+  // Wall detection
+  if (paddleTop.x + paddleTop.w > canvas.width) {
+    paddleTop.x = canvas.width - paddleTop.w;
+  }
+
+  if (paddleTop.x < 0) {
+    paddleTop.x = 0;
+    }
+}
+
 
 // Move ball on canvas
 function moveBall() {
@@ -123,12 +155,21 @@ function moveBall() {
 
   // Paddle collision
   if (
-    ball.x - ball.size > paddle.x &&
-    ball.x + ball.size < paddle.x + paddle.w &&
-    ball.y + ball.size > paddle.y
+    ball.x - ball.size > paddleBottom.x &&
+    ball.x + ball.size < paddleBottom.x + paddleBottom.w &&
+    ball.y + ball.size > paddleBottom.y
   ) {
     ball.dy = -ball.speed;
   }
+
+  if (
+    ball.x - ball.size > paddleTop.x &&
+    ball.x + ball.size < paddleTop.x + paddleTop.w &&
+    ball.y + ball.size > paddleTop.y
+  ) {
+    ball.dy = -ball.speed;
+  }
+
 
   // Brick collision
   bricks.forEach(column => {
@@ -163,21 +204,34 @@ function increaseScore() {
   if (score % (brickRowCount * brickColumnCount) === 0) {
 
       ball.visible = false;
-      paddle.visible = false;
+      paddleBottom.visible = false;
+      paddleTop.visible = false;
 
       //After 0.5 sec restart the game
       setTimeout(function () {
           showAllBricks();
           score = 0;
-          paddle.x = canvas.width / 2 - 40;
-          paddle.y = canvas.height - 20;
+          paddleBottom.x = canvas.width / 2 - 40;
+          paddleBottom.y = canvas.height - 20;
           ball.x = canvas.width / 2;
-          ball.y = canvas.height / 2;
+          ball.y = canvas.height / 1;
           ball.visible = true;
-          paddle.visible = true;
+          paddleBottom.visible = true;
+      },delay)
+      setTimeout(function () {
+          showAllBricks();
+          score = 0;
+          paddleTop.x = canvas.width / 2 - 580;
+          paddleTop.y = canvas.height - 560;
+          ball.x = canvas.width / 2;
+          ball.y = canvas.height / 1;
+          ball.visible = true;
+          paddleTop.visible = true;
       },delay)
   }
 }
+
+
 
 // Make all bricks appear
 function showAllBricks() {
@@ -192,14 +246,16 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   drawBall();
-  drawPaddle();
+  drawPaddleBottom();
+  drawPaddleTop();
   drawScore();
   drawBricks();
 }
 
 // Update canvas drawing and animation
 function update() {
-  movePaddle();
+  movePaddleBottom();
+  movePaddleTop();
   moveBall();
 
   // Draw everything
@@ -211,29 +267,55 @@ function update() {
 update();
 
 // Keydown event
-function keyDown(e) {
+function keyDownBottom(e) {
   if (e.key === 'Right' || e.key === 'ArrowRight') {
-    paddle.dx = paddle.speed;
+    paddleBottom.dx = paddleBottom.speed;
   } else if (e.key === 'Left' || e.key === 'ArrowLeft') {
-    paddle.dx = -paddle.speed;
+    paddleBottom.dx = -paddleBottom.speed;
   }
 }
 
+function keyDownTop(e) {
+  if (e.key === 'd') {
+    paddleTop.dx = paddleTop.speed;
+  } else if (e.key === 'a') {
+    paddleTop.dx = -paddleTop.speed;
+  }
+}
+
+
+
 // Keyup event
-function keyUp(e) {
+function keyUpBottom(e) {
   if (
     e.key === 'Right' ||
     e.key === 'ArrowRight' ||
     e.key === 'Left' ||
     e.key === 'ArrowLeft'
   ) {
-    paddle.dx = 0;
+    paddleBottom.dx = 0;
   }
 }
 
+function keyUpTop(e) {
+  if (
+    e.key === 'd' ||
+    e.key === 'ArrowRight' ||
+    e.key === 'a' ||
+    e.key === 'ArrowLeft'
+  ) {
+    paddleTop.dx = 0;
+  }
+}
+
+
 // Keyboard event handlers
-document.addEventListener('keydown', keyDown);
-document.addEventListener('keyup', keyUp);
+document.addEventListener('keydown', keyDownBottom);
+document.addEventListener('keyup', keyUpBottom);
+
+document.addEventListener('keydown', keyDownTop);
+document.addEventListener('keyup', keyUpTop);
+
 
 // Rules and close event handlers
 rulesBtn.addEventListener('click', () => rules.classList.add('show'));
